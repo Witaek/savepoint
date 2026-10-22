@@ -30,6 +30,7 @@
 <svelte:element
 	this={href ? 'a' : 'div'}
 	{href}
+	aria-label={href ? game.name : undefined}
 	class="cover group relative block aspect-[3/4] overflow-hidden border border-[#2a241b] bg-stone transition {perfect
 		? 'perfect'
 		: ''} {href ? 'hover:border-ember-dim' : ''}"

@@ -1,13 +1,27 @@
 import { devices, expect, test, type Page } from '@playwright/test';
 
-/** One account walks through the whole app, in order (the database starts empty). */
-test.describe.configure({ mode: 'serial' });
+/**
+ * One account walks through the whole app, in order (the database starts empty), so a retry
+ * would start from the middle: no retries.
+ */
+test.describe.configure({ mode: 'serial', retries: 0 });
+
+/** A 1×1 PNG served for every Steam/IGDB image, so pages look the same with or without network. */
+const PIXEL = Buffer.from(
+	'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+	'base64'
+);
+const IMAGES = /steamstatic\.com|akamaihd\.net|images\.igdb\.com/;
 
 const MOCK = 'http://localhost:4400';
 let page: Page;
 
 test.beforeAll(async ({ browser }) => {
-	page = await browser.newPage();
+	// The service worker would fetch images itself, past the stub.
+	page = await browser.newPage({ serviceWorkers: 'block' });
+	await page.route(IMAGES, (route) =>
+		route.fulfill({ status: 200, contentType: 'image/png', body: PIXEL })
+	);
 });
 
 async function signIn(p: Page) {
