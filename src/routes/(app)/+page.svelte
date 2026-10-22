@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { ChevronRight, Settings } from '@lucide/svelte';
+	import { ChevronRight } from '@lucide/svelte';
 	import AchievementIcon from '$lib/components/AchievementIcon.svelte';
+	import PageHeader from '$lib/components/PageHeader.svelte';
 	import Cover from '$lib/components/Cover.svelte';
 	import EmberBar from '$lib/components/EmberBar.svelte';
 	import Rarity from '$lib/components/Rarity.svelte';
@@ -24,12 +25,7 @@
 <main
 	class="mx-auto grid max-w-6xl gap-8 px-4 pt-[calc(1.25rem+env(safe-area-inset-top))] pb-10 md:px-8 md:pt-8"
 >
-	<header class="flex items-center justify-between">
-		<h1 class="font-display text-2xl tracking-[0.14em] text-ash md:text-3xl">BONFIRE</h1>
-		<a href="/settings" class="text-dust hover:text-ash lg:hidden" aria-label="Settings"
-			><Settings class="size-5" strokeWidth={1.5} /></a
-		>
-	</header>
+	<PageHeader title="BONFIRE" />
 
 	{#if !data.steam.linked && data.empty}
 		<section class="panel grid gap-3 p-6 md:p-8">
@@ -54,7 +50,7 @@
 	{#if current}
 		<section aria-labelledby="current-title" class="grid gap-3">
 			<h2 class="rule-title">Currently kindled</h2>
-			<div class="grid overflow-hidden border border-[#2a241b] md:grid-cols-[1fr_320px]">
+			<div class="grid overflow-hidden border border-[#2a241b] md:grid-cols-[minmax(0,1fr)_320px]">
 				<a
 					href="/game/{current.game.id}"
 					class="hero relative flex min-h-56 flex-col justify-end gap-2 p-5 md:min-h-64 md:p-7"
@@ -79,7 +75,7 @@
 					>
 					<h3
 						id="current-title"
-						class="relative font-display text-3xl leading-none font-black tracking-[0.1em] text-[#f3e6c4] uppercase [text-shadow:0_2px_20px_rgba(0,0,0,.8)] md:text-[2.6rem]"
+						class="relative font-display text-[clamp(1.4rem,7vw,2.6rem)] leading-tight font-black tracking-[0.08em] text-[#f3e6c4] uppercase [text-shadow:0_2px_20px_rgba(0,0,0,.8)]"
 					>
 						{current.game.name}
 					</h3>
@@ -125,7 +121,7 @@
 						{/each}
 						<a
 							href="/game/{current.game.id}"
-							class="label mt-1 flex items-center gap-1 hover:!text-ash"
+							class="label flex min-h-10 items-center gap-1 hover:!text-ash"
 							>All achievements <ChevronRight class="size-3" /></a
 						>
 					</div>
@@ -166,7 +162,7 @@
 		</section>
 	{/if}
 
-	<div class="grid gap-8 lg:grid-cols-[1.6fr_1fr]">
+	<div class="grid gap-8 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
 		{#if data.almostThere.length}
 			<section class="grid content-start gap-3">
 				<h2 class="rule-title">Almost there</h2>

@@ -14,7 +14,9 @@
 <main
 	class="mx-auto grid max-w-3xl gap-6 px-4 pt-[calc(1.25rem+env(safe-area-inset-top))] pb-10 md:px-8 md:pt-8"
 >
-	<a href="/settings" class="label flex items-center gap-1 hover:!text-ash"
+	<a
+		href="/settings"
+		class="label -my-3 flex h-11 items-center gap-1 justify-self-start pr-3 hover:!text-ash"
 		><ChevronLeft class="size-3" /> Settings</a
 	>
 	<h1 class="font-display text-2xl tracking-[0.14em]">USERS</h1>

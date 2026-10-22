@@ -67,6 +67,35 @@ select {
 	outline-offset: 2px;
 }
 
+@layer base {
+	/*
+	 * A grid's implicit column grows to its widest unbreakable content (a long one-word title, a
+	 * game name that doesn't wrap), which made pages wider than a phone screen. Grids without
+	 * their own columns get one column that never exceeds the screen.
+	 */
+	.grid {
+		grid-template-columns: minmax(0, 1fr);
+	}
+	h1,
+	h2,
+	h3,
+	h4 {
+		overflow-wrap: break-word;
+	}
+}
+
+/*
+ * Touch screens and phones: iOS zooms into fields under 16px (and stays zoomed), and controls get
+ * finger size.
+ */
+@media (pointer: coarse), (max-width: 47.99rem) {
+	input:not([type='checkbox']),
+	select,
+	textarea {
+		font-size: max(16px, 1em) !important;
+	}
+}
+
 @layer components {
 	/* Small engraved capitals: section titles, labels, buttons. */
 	.engraved {
@@ -76,7 +105,7 @@ select {
 	}
 	.label {
 		font-family: var(--font-mono);
-		font-size: 0.68rem;
+		font-size: 0.72rem;
 		letter-spacing: 0.16em;
 		text-transform: uppercase;
 		color: var(--color-dust);
@@ -106,6 +135,7 @@ select {
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
+		min-height: 2.5rem;
 		gap: 0.5rem;
 		padding: 0.55rem 1rem;
 		font-family: var(--font-display);
@@ -171,6 +201,8 @@ select {
 	.chip {
 		display: inline-flex;
 		align-items: center;
+		justify-content: center;
+		min-height: 2.25rem;
 		gap: 0.35rem;
 		padding: 0.3rem 0.7rem;
 		border: 1px solid var(--color-rule);
@@ -208,6 +240,19 @@ select {
 	.ember-bar.gold > i {
 		background: linear-gradient(90deg, #ffe2a0, #fff3d0);
 	}
+	/* A row of chips that scrolls sideways on phones, fading out at the edge. */
+	.chip-scroller {
+		scrollbar-width: none;
+		mask-image: linear-gradient(90deg, #000 calc(100% - 2.5rem), transparent);
+	}
+	.chip-scroller::-webkit-scrollbar {
+		display: none;
+	}
+	@media (min-width: 48rem) {
+		.chip-scroller {
+			mask-image: none;
+		}
+	}
 	.miss-tag {
 		font-family: var(--font-mono);
 		font-size: 0.6rem;
@@ -215,6 +260,15 @@ select {
 		color: var(--color-blood);
 		border: 1px solid currentColor;
 		padding: 0 0.3rem;
+	}
+}
+
+@media (pointer: coarse), (max-width: 47.99rem) {
+	.btn {
+		min-height: 2.75rem;
+	}
+	.chip {
+		min-height: 2.5rem;
 	}
 }
 

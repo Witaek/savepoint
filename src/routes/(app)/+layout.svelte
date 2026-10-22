@@ -30,6 +30,12 @@
 
 <AppNav syncing={data.syncing} steamName={data.user.steamName} />
 
+<!-- Installed on iPhone, the status bar is see-through: keep scrolled content from showing under it. -->
+<div
+	class="pointer-events-none fixed inset-x-0 top-0 z-40 h-[env(safe-area-inset-top)] bg-abyss"
+	aria-hidden="true"
+></div>
+
 <div class="min-h-dvh pb-[calc(4.75rem+env(safe-area-inset-bottom))] lg:pb-0 lg:pl-56">
 	{@render children()}
 </div>

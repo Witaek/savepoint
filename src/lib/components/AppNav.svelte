@@ -13,8 +13,8 @@
 		{ href: '/stats', label: 'Stats', icon: ChartColumn },
 		{ href: '/settings', label: 'Settings', icon: Settings }
 	];
-	// Stats is reached from the Bonfire on phones: five tabs fit.
-	const tabs = items.filter((i) => i.href !== '/stats');
+	// Five tabs fit on a phone: Settings is the gear at the top of each page (PageHeader).
+	const tabs = items.filter((i) => i.href !== '/settings');
 
 	const isActive = (href: string) =>
 		href === '/' ? page.url.pathname === '/' : page.url.pathname.startsWith(href);

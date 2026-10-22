@@ -4,6 +4,7 @@
 	import { page } from '$app/state';
 	import { Search } from '@lucide/svelte';
 	import Cover from '$lib/components/Cover.svelte';
+	import PageHeader from '$lib/components/PageHeader.svelte';
 	import { STATUS_LABELS } from '$lib/games';
 	import { toastResult } from '$lib/forms';
 
@@ -33,7 +34,7 @@
 <main
 	class="mx-auto grid max-w-6xl gap-6 px-4 pt-[calc(1.25rem+env(safe-area-inset-top))] pb-10 md:px-8 md:pt-8"
 >
-	<h1 class="font-display text-2xl tracking-[0.14em] md:text-3xl">SEARCH</h1>
+	<PageHeader title="SEARCH" />
 
 	<form
 		method="GET"
@@ -67,7 +68,7 @@
 		</span>
 		<label class="flex items-center gap-2">
 			<span class="label">Adding for</span>
-			<select class="input !w-auto !py-1 text-sm" bind:value={platform}>
+			<select class="input !w-auto !py-1.5 text-sm" bind:value={platform}>
 				{#each data.platforms as p (p)}<option value={p}>{p}</option>{/each}
 			</select>
 		</label>
@@ -78,23 +79,28 @@
 	{/if}
 
 	{#if data.results.length}
-		<ul class="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+		<!-- A list on phones (small cover beside the name), a grid of covers on wider screens. -->
+		<ul class="grid gap-3 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-6 md:grid-cols-4 lg:grid-cols-5">
 			{#each data.results as result, i (result.key)}
 				{@const owned = data.inLibrary[result.key]}
-				<li class="grid content-start gap-2">
+				<li
+					class="grid grid-cols-[4.5rem_minmax(0,1fr)] content-start gap-x-3 gap-y-2 border-b border-[#1d1912] pb-3 sm:grid-cols-1 sm:border-0 sm:pb-0"
+				>
 					<Cover
 						game={{ id: i, name: result.name, cover: result.cover, steamAppId: result.steamAppId }}
 						href={owned ? `/game/${owned.gameId}` : undefined}
 						eager={i < 5}
 					/>
-					<div>
+					<div class="self-center sm:self-auto">
 						<p class="font-display text-[13px] leading-snug tracking-[0.04em]">{result.name}</p>
 						<p class="font-mono text-[10.5px] text-dust">
 							{[result.year, result.platforms.slice(0, 4).join(' · ')].filter(Boolean).join(' · ')}
 						</p>
 					</div>
 					{#if owned}
-						<a href="/game/{owned.gameId}" class="label !text-ember"
+						<a
+							href="/game/{owned.gameId}"
+							class="label col-span-2 flex min-h-10 items-center !text-ember sm:col-span-1"
 							>In library · {STATUS_LABELS[owned.status]} →</a
 						>
 					{:else}
@@ -102,7 +108,7 @@
 							method="POST"
 							action="?/add"
 							use:enhance={toastResult()}
-							class="flex flex-wrap gap-1.5"
+							class="col-span-2 grid grid-cols-2 gap-1.5 sm:col-span-1 sm:flex sm:flex-wrap"
 						>
 							<input type="hidden" name="key" value={result.key} />
 							<input type="hidden" name="name" value={result.name} />
@@ -132,7 +138,7 @@
 
 	<section class="panel grid gap-3 p-4">
 		<button
-			class="rule-title text-left"
+			class="rule-title min-h-10 text-left"
 			onclick={() => (manualOpen = !manualOpen)}
 			aria-expanded={manualOpen}
 		>
@@ -146,7 +152,7 @@
 				method="POST"
 				action="?/manual"
 				use:enhance
-				class="grid gap-3 sm:grid-cols-[1fr_auto_auto_auto] sm:items-end"
+				class="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto_auto_auto] sm:items-end"
 			>
 				<div class="grid gap-1.5">
 					<label class="label" for="manual-name">Name</label>

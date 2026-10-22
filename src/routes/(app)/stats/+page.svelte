@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PageHeader from '$lib/components/PageHeader.svelte';
 	import UnlockRow from '$lib/components/UnlockRow.svelte';
 	import { formatPlaytime } from '$lib/games';
 	import { formatNumber } from '$lib/format';
@@ -17,7 +18,7 @@
 <main
 	class="mx-auto grid max-w-6xl gap-8 px-4 pt-[calc(1.25rem+env(safe-area-inset-top))] pb-10 md:px-8 md:pt-8"
 >
-	<h1 class="font-display text-2xl tracking-[0.14em] md:text-3xl">STATS</h1>
+	<PageHeader title="STATS" />
 
 	<section
 		class="grid grid-cols-2 border border-[#2a241b] sm:grid-cols-3 lg:grid-cols-6"
@@ -41,7 +42,7 @@
 			>
 				{#each data.months as m (m.month)}
 					<div class="flex h-full flex-1 flex-col items-center justify-end gap-1">
-						{#if m.count}<span class="font-mono text-[10px] text-dust tabular-nums">{m.count}</span
+						{#if m.count}<span class="font-mono text-[11px] text-dust tabular-nums">{m.count}</span
 							>{/if}
 						<div
 							class="w-full bg-gradient-to-t from-[#8a5a1c] to-ember shadow-[0_0_10px_-2px_rgba(255,150,60,.5)]"
@@ -52,8 +53,11 @@
 			</div>
 			<div class="flex gap-1.5">
 				{#each data.months as m (m.month)}
-					<span class="flex-1 text-center font-mono text-[10px] text-faint"
-						>{monthLabel(m.month)}</span
+					<!-- One letter on phones, where twelve "Sept"s don't fit. -->
+					<span class="flex-1 text-center font-mono text-[11px] text-faint"
+						><span class="sm:hidden">{monthLabel(m.month).charAt(0)}</span><span
+							class="hidden sm:inline">{monthLabel(m.month)}</span
+						></span
 					>
 				{/each}
 			</div>
@@ -63,7 +67,7 @@
 			<h2 id="bands-title" class="rule-title">Games by completion</h2>
 			<ul class="grid gap-2">
 				{#each data.bands as band (band.label)}
-					<li class="grid grid-cols-[64px_1fr_36px] items-center gap-3">
+					<li class="grid grid-cols-[64px_minmax(0,1fr)_36px] items-center gap-3">
 						<span class="font-mono text-xs text-dust">{band.label}</span>
 						<span class="h-3 bg-[#1c1812]"
 							><i
@@ -93,7 +97,7 @@
 					<li>
 						<a
 							href="/game/{item.game.id}"
-							class="grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 hover:text-ember"
+							class="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-1 py-1.5 hover:text-ember"
 						>
 							<span class="truncate text-[14px]">{item.game.name}</span>
 							<span class="font-mono text-xs text-dust"

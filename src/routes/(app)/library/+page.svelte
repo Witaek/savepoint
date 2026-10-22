@@ -4,6 +4,7 @@
 	import { page } from '$app/state';
 	import Cover from '$lib/components/Cover.svelte';
 	import EmberBar from '$lib/components/EmberBar.svelte';
+	import PageHeader from '$lib/components/PageHeader.svelte';
 	import {
 		GAME_STATUSES,
 		STATUS_HINTS,
@@ -83,33 +84,33 @@
 <main
 	class="mx-auto grid max-w-7xl gap-5 px-4 pt-[calc(1.25rem+env(safe-area-inset-top))] pb-10 md:px-8 md:pt-8"
 >
-	<header class="flex flex-wrap items-end justify-between gap-3">
-		<h1 class="font-display text-2xl tracking-[0.14em] md:text-3xl">LIBRARY</h1>
-		<div class="flex flex-wrap items-center gap-2">
-			<label class="sr-only" for="library-filter">Filter by name</label>
-			<input
-				id="library-filter"
-				class="input !w-48 !py-1.5 text-sm"
-				placeholder="Filter by name"
-				bind:value={query}
-			/>
-			<label class="sr-only" for="library-sort">Sort</label>
-			<select
-				id="library-sort"
-				class="input !w-auto !py-1.5 text-sm"
-				value={sort}
-				onchange={(e) =>
-					setParam('sort', e.currentTarget.value === 'played' ? null : e.currentTarget.value)}
-			>
-				{#each Object.entries(SORTS) as [value, label] (value)}
-					<option {value}>{label}</option>
-				{/each}
-			</select>
-		</div>
-	</header>
+	<PageHeader title="LIBRARY" />
+	<div class="grid grid-cols-[minmax(0,1fr)_auto] gap-2 md:max-w-xl">
+		<label class="sr-only" for="library-filter">Filter by name</label>
+		<input
+			id="library-filter"
+			type="search"
+			class="input !py-2 text-sm"
+			placeholder="Filter by name"
+			bind:value={query}
+		/>
+		<label class="sr-only" for="library-sort">Sort</label>
+		<select
+			id="library-sort"
+			class="input !w-auto !py-2 text-sm"
+			value={sort}
+			onchange={(e) =>
+				setParam('sort', e.currentTarget.value === 'played' ? null : e.currentTarget.value)}
+		>
+			{#each Object.entries(SORTS) as [value, label] (value)}
+				<option {value}>{label}</option>
+			{/each}
+		</select>
+	</div>
 
+	<!-- On phones the statuses scroll sideways; the fade on the right says there are more. -->
 	<nav
-		class="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 md:mx-0 md:flex-wrap md:px-0"
+		class="chip-scroller -mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 md:mx-0 md:flex-wrap md:px-0"
 		aria-label="Status"
 	>
 		<button class="chip" aria-pressed={status === 'all'} onclick={() => setParam('status', null)}
@@ -150,12 +151,14 @@
 		</p>
 		<ul class="grid gap-2">
 			{#each items as item (item.game.id)}
-				<li class="panel flex flex-wrap items-center gap-3 p-2.5 sm:flex-nowrap">
-					<div class="w-12 shrink-0"><Cover game={item.game} href="/game/{item.game.id}" /></div>
-					<div class="min-w-0 flex-1">
+				<li
+					class="panel grid grid-cols-[3rem_minmax(0,1fr)] items-center gap-3 p-2.5 sm:grid-cols-[3rem_minmax(0,1fr)_auto]"
+				>
+					<Cover game={item.game} href="/game/{item.game.id}" />
+					<div class="min-w-0">
 						<a
 							href="/game/{item.game.id}"
-							class="block truncate font-display text-sm tracking-[0.05em]">{item.game.name}</a
+							class="block truncate py-1 font-display text-sm tracking-[0.05em]">{item.game.name}</a
 						>
 						<p class="font-mono text-[11px] text-dust">
 							{formatPlaytime(item.entry.playtimeMinutes)}{item.entry.lastPlayedAt
@@ -165,7 +168,13 @@
 								: ''}
 						</p>
 					</div>
-					<form method="POST" action="?/status" use:enhance class="flex flex-wrap gap-1.5">
+					<!-- 2 × 2 on phones, under the name; in one row next to it on wider screens. -->
+					<form
+						method="POST"
+						action="?/status"
+						use:enhance
+						class="col-span-2 grid grid-cols-2 gap-1.5 sm:col-span-1 sm:flex"
+					>
 						<input type="hidden" name="gameId" value={item.game.id} />
 						{#each TRIAGE as s (s)}
 							<button class="chip hover:!border-ember hover:!text-ash" name="status" value={s}
@@ -177,7 +186,7 @@
 			{/each}
 		</ul>
 	{:else}
-		<div class="grid gap-6 lg:grid-cols-[1fr_270px]">
+		<div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_270px]">
 			<ul class="grid grid-cols-3 content-start gap-3 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-6">
 				{#each items as item, i (item.game.id)}
 					<li
@@ -206,7 +215,7 @@
 					>
 						{selected.game.name}
 					</h2>
-					<dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-[13px]">
+					<dl class="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1 text-[13px]">
 						{#if selected.progress.total}
 							<dt class="label pt-0.5">Achievements</dt>
 							<dd class="text-right tabular-nums">

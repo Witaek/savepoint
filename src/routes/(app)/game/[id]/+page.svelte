@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { Check, Eye, RefreshCw, Trash2 } from '@lucide/svelte';
+	import { afterNavigate } from '$app/navigation';
+	import { Check, ChevronLeft, Eye, RefreshCw, Trash2 } from '@lucide/svelte';
 	import AchievementIcon from '$lib/components/AchievementIcon.svelte';
 	import Cover from '$lib/components/Cover.svelte';
 	import EmberBar from '$lib/components/EmberBar.svelte';
@@ -49,6 +50,18 @@
 	const isHidden = (a: { id: number; hidden: boolean; unlockedAt: Date | null }) =>
 		a.hidden && !a.unlockedAt && !data.showHidden && !revealed.has(a.id);
 
+	// The installed app has no browser back button: go back to where you came from (keeping its
+	// scroll position), or to the library when the page was opened directly.
+	let cameFromApp = $state(false);
+	afterNavigate(({ from }) => {
+		if (from) cameFromApp = true;
+	});
+	function back(event: MouseEvent) {
+		if (!cameFromApp) return;
+		event.preventDefault();
+		history.back();
+	}
+
 	let syncing = $state(false);
 	let addingItem = $state(false);
 	let removeConfirm = $state(false);
@@ -72,8 +85,14 @@
 	<main
 		class="mx-auto grid max-w-5xl gap-7 px-4 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-12 md:px-8 md:pt-14"
 	>
+		<a
+			href="/library"
+			onclick={back}
+			class="label -my-3 -ml-1 flex h-11 items-center gap-1 justify-self-start pr-3 hover:!text-ash"
+			><ChevronLeft class="size-4" /> Back</a
+		>
 		<header
-			class="grid grid-cols-[96px_1fr] items-end gap-4 sm:grid-cols-[132px_1fr_auto] md:gap-6"
+			class="grid grid-cols-[84px_minmax(0,1fr)] items-end gap-4 sm:grid-cols-[132px_minmax(0,1fr)_auto] md:gap-6"
 		>
 			<Cover {game} progress={data.progress.total ? data.progress : null} eager />
 			<div class="grid min-w-0 gap-1.5">
@@ -83,7 +102,7 @@
 					>
 				{/if}
 				<h1
-					class="font-display text-2xl leading-tight font-bold tracking-[0.08em] text-[#f3e6c4] uppercase md:text-[2rem]"
+					class="font-display text-[clamp(1.2rem,5.6vw,2rem)] leading-tight font-bold tracking-[0.06em] text-[#f3e6c4] uppercase"
 				>
 					{game.name}
 				</h1>
@@ -97,6 +116,20 @@
 						.filter(Boolean)
 						.join(' · ')}
 				</p>
+				{#if data.progress.total}
+					<!-- The ring has no room on phones: the same numbers, as a line. -->
+					<p
+						class="font-mono text-xs sm:hidden {isPerfect(data.progress)
+							? 'text-gold'
+							: 'text-ash'}"
+					>
+						{data.progress.unlocked} / {data.progress.total} · {percent(data.progress)}%{isPerfect(
+							data.progress
+						)
+							? ' · Perfected'
+							: ''}
+					</p>
+				{/if}
 			</div>
 			{#if data.progress.total}
 				<div class="hidden sm:block">
@@ -114,7 +147,9 @@
 
 		<!-- Library controls -->
 		{#if entry}
-			<section class="panel grid gap-4 p-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
+			<section
+				class="panel grid grid-cols-2 gap-3 p-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] md:items-end md:gap-4 md:p-4"
+			>
 				<form
 					method="POST"
 					action="?/update"
@@ -153,9 +188,10 @@
 							>{/if}
 					</select>
 				</form>
-				<div class="flex flex-wrap gap-2">
+				<div class="col-span-2 flex gap-2 md:col-span-1">
 					{#if data.canSync}
 						<form
+							class="flex-1 md:flex-none"
 							method="POST"
 							action="?/sync"
 							use:enhance={() => {
@@ -172,7 +208,7 @@
 							}}
 						>
 							<button
-								class="btn btn-ghost"
+								class="btn btn-ghost w-full"
 								disabled={syncing}
 								title="Read this game's achievements from Steam now"
 							>
@@ -181,8 +217,8 @@
 						</form>
 					{/if}
 					{#if removeConfirm}
-						<form method="POST" action="?/remove" use:enhance>
-							<button class="btn btn-danger">Remove for good</button>
+						<form method="POST" action="?/remove" use:enhance class="flex-1 md:flex-none">
+							<button class="btn btn-danger w-full">Remove for good</button>
 						</form>
 					{:else}
 						<button
@@ -193,7 +229,7 @@
 					{/if}
 				</div>
 				{#if entry.perfectedAt}
-					<p class="text-sm text-gold md:col-span-3">
+					<p class="col-span-2 text-sm text-gold md:col-span-3">
 						Perfected {formatDate(entry.perfectedAt)}. It's in your Hall of Fame.
 					</p>
 				{/if}
@@ -205,11 +241,11 @@
 					method="POST"
 					action="?/add"
 					use:enhance={toastResult()}
-					class="flex flex-wrap items-end gap-3"
+					class="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-end sm:gap-3"
 				>
-					<div class="grid gap-1.5">
+					<div class="col-span-2 grid gap-1.5">
 						<label class="label" for="add-platform">Platform</label>
-						<select id="add-platform" name="platform" class="input !w-auto">
+						<select id="add-platform" name="platform" class="input sm:!w-auto">
 							{#each data.platforms as p (p)}<option value={p}>{p}</option>{/each}
 						</select>
 					</div>
@@ -224,25 +260,34 @@
 		<!-- Achievements -->
 		{#if steamList.length}
 			<section class="grid gap-3" aria-labelledby="ach-title">
-				<div class="flex flex-wrap items-center gap-3">
-					<h2 id="ach-title" class="rule-title flex-1">
-						Achievements · {steamProgress.unlocked} / {steamProgress.total}
-					</h2>
-					<div class="flex gap-1.5" role="group" aria-label="Show">
-						{#each [['all', 'All'], ['locked', 'Locked'], ['unlocked', 'Unlocked']] as [value, label] (value)}
-							<button
-								class="chip"
-								aria-pressed={filter === value}
-								onclick={() => (filter = value as Filter)}>{label}</button
-							>
-						{/each}
+				<!-- Stays at the top while scrolling a long list, to switch filters from anywhere. -->
+				<div
+					class="sticky top-[env(safe-area-inset-top)] z-20 -mx-4 grid gap-3 bg-abyss/95 px-4 py-3 backdrop-blur md:mx-0 md:px-0"
+				>
+					<div class="flex flex-wrap items-center gap-3">
+						<h2 id="ach-title" class="rule-title flex-1">
+							Achievements · {steamProgress.unlocked} / {steamProgress.total}
+						</h2>
+						<div
+							class="grid w-full grid-cols-3 gap-1.5 sm:flex sm:w-auto"
+							role="group"
+							aria-label="Show"
+						>
+							{#each [['all', 'All'], ['locked', 'Locked'], ['unlocked', 'Unlocked']] as [value, label] (value)}
+								<button
+									class="chip"
+									aria-pressed={filter === value}
+									onclick={() => (filter = value as Filter)}>{label}</button
+								>
+							{/each}
+						</div>
 					</div>
+					<EmberBar
+						value={percent(steamProgress)}
+						gold={isPerfect(steamProgress)}
+						label="Achievements"
+					/>
 				</div>
-				<EmberBar
-					value={percent(steamProgress)}
-					gold={isPerfect(steamProgress)}
-					label="Achievements"
-				/>
 				{#if entry && !entry.steamOwned}
 					<p class="text-sm text-dust">
 						You don't own this on your linked Steam account, so tick achievements yourself as you
@@ -253,7 +298,7 @@
 					{#each shown as a (a.id)}
 						{@const hidden = isHidden(a)}
 						<li
-							class="grid grid-cols-[44px_1fr_auto] items-center gap-3 border-b border-[#1d1912] px-3 py-2.5 last:border-b-0 sm:grid-cols-[44px_1fr_110px_auto] {a.unlockedAt
+							class="grid grid-cols-[44px_minmax(0,1fr)_auto] items-center gap-3 border-b border-[#1d1912] px-3 py-2.5 last:border-b-0 sm:grid-cols-[44px_minmax(0,1fr)_110px_auto] {a.unlockedAt
 								? 'bg-gradient-to-r from-ember/[0.06] to-transparent'
 								: ''}"
 						>
@@ -281,7 +326,7 @@
 								</p>
 								{#if hidden}
 									<button
-										class="label mt-1 inline-flex items-center gap-1 border border-dashed border-[#4a3f2e] px-2 py-0.5 hover:!text-ash"
+										class="label mt-1.5 inline-flex min-h-9 items-center gap-1 border border-dashed border-[#4a3f2e] px-2.5 hover:!text-ash"
 										onclick={() => (revealed = new Set([...revealed, a.id]))}
 										><Eye class="size-3" /> Reveal hidden achievement</button
 									>
@@ -301,7 +346,7 @@
 										<input type="hidden" name="achievementId" value={a.id} />
 										<input type="hidden" name="unlocked" value={a.unlockedAt ? '0' : '1'} />
 										<button
-											class="grid size-8 place-items-center border {a.unlockedAt
+											class="grid size-10 place-items-center border sm:size-8 {a.unlockedAt
 												? 'border-ember bg-ember/15 text-ember'
 												: 'border-rule text-faint hover:border-dust'}"
 											aria-label={a.unlockedAt
@@ -310,11 +355,14 @@
 										>
 									</form>
 								{:else}
+									<!-- The lock icon already says locked; phones keep the width for the name. -->
 									<span class="font-mono text-[11px] text-dust"
-										>{a.unlockedAt ? formatDate(a.unlockedAt) : 'locked'}</span
+										>{#if a.unlockedAt}{formatDate(a.unlockedAt)}{:else}<span
+												class="hidden sm:inline">locked</span
+											>{/if}</span
 									>
 								{/if}
-								<span class="sm:hidden"><Rarity value={a.globalPercent} /></span>
+								<span class="block sm:hidden"><Rarity value={a.globalPercent} /></span>
 							</div>
 						</li>
 					{:else}
@@ -346,7 +394,7 @@
 									<input type="hidden" name="achievementId" value={item.id} />
 									<input type="hidden" name="unlocked" value={item.unlockedAt ? '0' : '1'} />
 									<button
-										class="grid size-7 place-items-center border {item.unlockedAt
+										class="grid size-10 place-items-center border sm:size-8 {item.unlockedAt
 											? 'border-ember bg-ember/15 text-ember'
 											: 'border-rule text-faint hover:border-dust'}"
 										aria-label={item.unlockedAt ? `Untick ${item.name}` : `Tick ${item.name}`}
@@ -363,8 +411,9 @@
 							{#if item.createdBy === data.userId || data.isAdmin}
 								<form method="POST" action="?/deleteItem" use:enhance={toastResult()}>
 									<input type="hidden" name="achievementId" value={item.id} />
-									<button class="p-1 text-faint hover:text-blood" aria-label="Remove {item.name}"
-										><Trash2 class="size-4" /></button
+									<button
+										class="grid size-10 place-items-center text-faint hover:text-blood"
+										aria-label="Remove {item.name}"><Trash2 class="size-4" /></button
 									>
 								</form>
 							{/if}
@@ -377,7 +426,7 @@
 					method="POST"
 					action="?/addItem"
 					use:enhance={toastResult({ reset: true })}
-					class="panel grid gap-3 p-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end"
+					class="panel grid gap-3 p-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end"
 				>
 					<div class="grid gap-1.5">
 						<label class="label" for="item-name">Item</label>

@@ -141,21 +141,22 @@
 				{:else if syncView.message}
 					<p class="text-sm text-dust">Last sync: {syncView.message}.</p>
 				{/if}
-				<div class="flex flex-wrap gap-2">
-					<form method="POST" action="?/syncSteam" use:enhance={startSync}>
-						<button class="btn" disabled={syncView.running}>Sync now</button>
+				<!-- Full-width on phones: Sync now on its own row, the other two side by side. -->
+				<div class="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+					<form method="POST" action="?/syncSteam" use:enhance={startSync} class="col-span-2">
+						<button class="btn w-full" disabled={syncView.running}>Sync now</button>
 					</form>
 					<form method="POST" action="?/syncSteam" use:enhance={startSync}>
 						<input type="hidden" name="all" value="1" />
 						<button
-							class="btn btn-ghost"
+							class="btn btn-ghost w-full"
 							disabled={syncView.running}
 							title="Re-read the achievements of every game, not only the ones played since"
 							>Re-read everything</button
 						>
 					</form>
 					<form method="POST" action="?/unlinkSteam" use:enhance={toastResult()}>
-						<button class="btn btn-danger" disabled={syncView.running}>Unlink</button>
+						<button class="btn btn-danger w-full" disabled={syncView.running}>Unlink</button>
 					</form>
 				</div>
 				<p class="text-sm text-dust">
@@ -210,7 +211,7 @@
 			method="POST"
 			action="?/addTarget"
 			use:enhance={toastResult({ reset: true })}
-			class="panel grid gap-3 p-3 sm:grid-cols-[auto_1fr_auto] sm:items-end"
+			class="panel grid gap-3 p-3 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-end"
 		>
 			<div class="grid gap-1.5">
 				<label class="label" for="target-type">Type</label>
@@ -295,7 +296,7 @@
 				method="POST"
 				action="?/password"
 				use:enhance={toastResult({ reset: true })}
-				class="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end"
+				class="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end"
 			>
 				<FormField
 					label="Current password"
@@ -313,16 +314,16 @@
 				/>
 				<button class="btn btn-ghost">Change</button>
 			</form>
-			<div class="flex flex-wrap gap-2">
+			<div class="grid gap-2 sm:flex sm:flex-wrap">
 				<form method="POST" action="?/signOutOthers" use:enhance={toastResult()}>
-					<button class="btn btn-ghost">Sign out other devices</button>
+					<button class="btn btn-ghost w-full">Sign out other devices</button>
 				</form>
 				<form
 					method="POST"
 					action="/logout"
 					onsubmit={() => navigator.serviceWorker?.controller?.postMessage('clear-user-data')}
 				>
-					<button class="btn btn-danger">Sign out</button>
+					<button class="btn btn-danger w-full">Sign out</button>
 				</form>
 			</div>
 			<p class="font-mono text-[11px] text-dust">Signed in as @{data.account.username}</p>
@@ -365,7 +366,7 @@
 			<div class="panel grid gap-2 p-4">
 				<h3 class="label">Background jobs</h3>
 				{#each data.jobs as job (job.name)}
-					<div class="grid grid-cols-[1fr_auto] gap-x-3 text-sm">
+					<div class="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 text-sm">
 						<span class="font-mono text-xs">{job.name}</span>
 						<span
 							class="font-mono text-xs {job.lastRun?.status === 'error'

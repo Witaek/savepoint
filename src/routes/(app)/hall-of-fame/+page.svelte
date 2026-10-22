@@ -1,6 +1,7 @@
 <script lang="ts">
 	import AchievementIcon from '$lib/components/AchievementIcon.svelte';
 	import Cover from '$lib/components/Cover.svelte';
+	import PageHeader from '$lib/components/PageHeader.svelte';
 	import Rarity from '$lib/components/Rarity.svelte';
 	import { formatPlaytime } from '$lib/games';
 	import { formatDate } from '$lib/format';
@@ -14,11 +15,7 @@
 	class="mx-auto grid max-w-6xl gap-6 px-4 pt-[calc(1.25rem+env(safe-area-inset-top))] pb-10 md:px-8 md:pt-8"
 >
 	<header class="grid gap-1">
-		<h1
-			class="font-display text-2xl tracking-[0.14em] text-gold [text-shadow:0_0_24px_rgba(255,190,90,.35)] md:text-3xl"
-		>
-			HALL OF FAME
-		</h1>
+		<PageHeader title="HALL OF FAME" gold />
 		<p class="text-dust italic">
 			{data.games.length === 0
 				? 'Every game you take to 100% is enshrined here.'

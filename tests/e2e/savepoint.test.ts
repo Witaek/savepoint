@@ -131,14 +131,51 @@ test('reaching 100% is celebrated once and enshrined', async () => {
 	await expect(page.getByText('2 games taken to 100%.')).toBeVisible();
 });
 
-test('works on a phone', async ({ browser }) => {
-	const phone = await browser.newContext({ ...devices['Pixel 7'] });
+test('fits the narrowest phone, with Settings, Stats and Back at hand', async ({ browser }) => {
+	// iPhone SE: 320px. A phone browser widens its layout to fit content that overflows, so
+	// "nothing is wider than the page" isn't enough: the page must stay as wide as the screen.
+	const phone = await browser.newContext({ ...devices['iPhone SE'], serviceWorkers: 'block' });
+	await phone.route(IMAGES, (route) =>
+		route.fulfill({ status: 200, contentType: 'image/png', body: PIXEL })
+	);
 	const p = await phone.newPage();
 	await signIn(p);
+	const screen = p.viewportSize()!.width;
+	for (const path of [
+		'/',
+		'/library',
+		'/library?status=unsorted',
+		'/search?q=elden',
+		'/hall-of-fame',
+		'/stats',
+		'/settings'
+	]) {
+		await p.goto(path);
+		const width = await p.evaluate(() =>
+			Math.max(window.innerWidth, document.documentElement.scrollWidth)
+		);
+		expect(width, `${path} is wider than the screen`).toBeLessThanOrEqual(screen);
+	}
+
+	// Game pages, including one with a long one-word title.
+	await p.goto('/library');
+	for (const name of [/KINGDOM HEARTS/, /Bloodborne/i]) {
+		await p.getByRole('link', { name }).first().click();
+		await expect(p.getByRole('heading', { level: 1 })).toBeVisible();
+		const width = await p.evaluate(() =>
+			Math.max(window.innerWidth, document.documentElement.scrollWidth)
+		);
+		expect(width).toBeLessThanOrEqual(screen);
+		// The installed app has no browser back button.
+		await p.getByRole('link', { name: 'Back' }).click();
+		await expect(p).toHaveURL('/library');
+	}
+
+	// Five tabs, with Stats; Settings is the gear at the top.
 	const tabs = p.getByRole('navigation', { name: 'Main' }).last();
-	await tabs.getByRole('link', { name: 'Library' }).click();
-	await expect(p).toHaveURL('/library');
-	const width = await p.evaluate(() => document.documentElement.scrollWidth);
-	expect(width).toBeLessThanOrEqual(p.viewportSize()!.width);
+	await tabs.getByRole('link', { name: 'Stats' }).click();
+	await expect(p).toHaveURL('/stats');
+	await p.getByRole('link', { name: 'Settings' }).click();
+	await expect(p).toHaveURL('/settings');
 	await phone.close();
 });

@@ -5,8 +5,25 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **Phone navigation**: the tab bar is Bonfire, Library, Search, Fame and **Stats** (Stats had no tab);
+  Settings is the gear at the top of each page. Game pages have a **Back** button, since the
+  installed app has no browser back button.
+- **Game pages on phones**: progress next to the title, status and platform side by side, the
+  achievement filter stays at the top while scrolling, and rows lose the "locked" label the lock
+  icon already shows.
+- **Search on phones** lists results with a small cover instead of half-screen covers.
+- Buttons, chips and checkboxes are finger-sized on phones; small labels are a little larger.
+
 ### Fixed
 
+- **Pages wider than the phone** (content touching the right edge, the page sliding sideways): a
+  long one-word title or game name stretched the layout past the screen. Pages now always fit,
+  down to 320px, and long titles wrap or shrink.
+- **iPhone zooming in** when tapping the library filter, the sort menu or the platform picker
+  (text under 16px), and staying zoomed.
+- Content no longer scrolls under the status bar in the installed app.
 - **"Steam keeps this profile's game details private" on a public profile.** Steam refuses the
   achievements of some games (403) even on public profiles, and one refusal stopped the whole
   sync with that message. Such a game is now skipped and tried again on the next sync; the sync

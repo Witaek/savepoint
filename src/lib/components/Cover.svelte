@@ -49,7 +49,7 @@
 	{:else}
 		<div class="painted absolute inset-0"></div>
 		<span
-			class="absolute inset-x-2.5 bottom-3 font-display text-[13px] leading-tight font-bold tracking-[0.08em] text-ash uppercase"
+			class="absolute inset-x-2.5 bottom-3 font-display text-[13px] leading-tight font-bold tracking-[0.08em] [overflow-wrap:anywhere] text-ash uppercase"
 			>{game.name}</span
 		>
 	{/if}
