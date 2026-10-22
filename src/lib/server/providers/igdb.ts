@@ -130,3 +130,23 @@ export async function getIgdbGame(id: number): Promise<IgdbGame | null> {
 	const raw = await query<RawIgdbGame[]>('games', `${FIELDS} where id = ${Math.trunc(id)};`);
 	return raw[0] ? mapIgdbGame(raw[0]) : null;
 }
+
+/**
+ * The games inside a bundle sold as one Steam app (Kingdom Hearts 1.5+2.5 → Kingdom Hearts Final
+ * Mix, Re:Chain of Memories, …), in release order: names to suggest when splitting it. IGDB lists
+ * on each game the bundles it's part of.
+ */
+export async function bundleContents(steamAppId: number): Promise<string[]> {
+	const uid = Math.trunc(steamAppId);
+	const links = await query<{ game?: number }[]>(
+		'external_games',
+		`fields game; where uid = "${uid}" & (external_game_source = ${STEAM_SOURCE} | category = ${STEAM_SOURCE}); limit 1;`
+	);
+	const bundleId = links[0]?.game;
+	if (!bundleId) return [];
+	const children = await query<{ name: string }[]>(
+		'games',
+		`fields name, first_release_date; where bundles = (${bundleId}); sort first_release_date asc; limit 30;`
+	);
+	return children.map((g) => g.name);
+}

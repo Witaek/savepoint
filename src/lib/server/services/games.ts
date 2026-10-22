@@ -5,6 +5,7 @@ import { getDb } from '../db/client';
 import { achievements, games, type GameRow } from '../db/schema';
 import { getIgdbGame, type IgdbGame } from '../providers/igdb';
 import { getGlobalPercentages, getSchema, getStoreDetails } from '../providers/steam';
+import { refreshSplit } from './splits';
 
 /** Games are shared by everyone on the server; this file creates and refreshes them. */
 
@@ -180,5 +181,7 @@ export async function syncSchema(gameId: number, appId: number): Promise<number>
 		}
 		tx.update(games).set({ schemaUpdatedAt: new Date() }).where(eq(games.id, gameId)).run();
 	});
+	// New achievements go into the game's groups; a known collection gets its split.
+	refreshSplit(gameId, appId);
 	return schema.length;
 }

@@ -12,6 +12,7 @@ import {
 	setUnlocked
 } from '$lib/server/services/achievements';
 import { getGame, refreshDetails, schemaIsStale, syncSchema } from '$lib/server/services/games';
+import { groupsOf } from '$lib/server/services/splits';
 import {
 	addToLibrary,
 	getEntry,
@@ -52,6 +53,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		entry,
 		achievements,
 		progress: progressFor(userId, id),
+		groups: groupsOf(id).map((g) => ({ id: g.id, name: g.name, kind: g.kind })),
 		showHidden: user.prefs.showHidden ?? false,
 		canSync: Boolean(entry?.steamOwned && user.steamId && config().steamConfigured),
 		syncing: isSyncing(userId),
@@ -118,7 +120,8 @@ export const actions: Actions = {
 		try {
 			addChecklistItem(locals.user!.id, idParam(params.id), {
 				name: text(form, 'name'),
-				description: text(form, 'description')
+				description: text(form, 'description'),
+				groupId: Number(form.get('groupId')) || null
 			});
 			return { ok: 'Added to the checklist.' };
 		} catch (cause) {

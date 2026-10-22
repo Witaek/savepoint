@@ -1,7 +1,13 @@
 import { randomBytes } from 'node:crypto';
 import { and, asc, desc, eq, max, sql, type SQL } from 'drizzle-orm';
 import { getDb } from '../db/client';
-import { achievements, games, userAchievements, type AchievementRow } from '../db/schema';
+import {
+	achievementGroups,
+	achievements,
+	games,
+	userAchievements,
+	type AchievementRow
+} from '../db/schema';
 import { getEntry, recheckPerfection, updatePerfection } from './library';
 
 export class AchievementError extends Error {}
@@ -83,12 +89,20 @@ export function setUnlocked(
 export function addChecklistItem(
 	userId: number,
 	gameId: number,
-	input: { name: string; description?: string | null }
+	input: { name: string; description?: string | null; groupId?: number | null }
 ): number {
 	const name = input.name.trim();
 	if (!name) throw new AchievementError('Give the item a name.');
 	if (name.length > 120) throw new AchievementError('Keep the name under 120 characters.');
 	const db = getDb();
+	// Added while looking at one game of a collection: it belongs to that game.
+	const group = input.groupId
+		? db
+				.select({ id: achievementGroups.id })
+				.from(achievementGroups)
+				.where(and(eq(achievementGroups.id, input.groupId), eq(achievementGroups.gameId, gameId)))
+				.get()
+		: undefined;
 	const last = db
 		.select({ n: max(achievements.sortOrder) })
 		.from(achievements)
@@ -103,6 +117,8 @@ export function addChecklistItem(
 			name,
 			description: input.description?.trim() || null,
 			sortOrder: (last?.n ?? -1) + 1,
+			groupId: group?.id ?? null,
+			groupManual: Boolean(group),
 			createdBy: userId
 		})
 		.returning({ id: achievements.id })

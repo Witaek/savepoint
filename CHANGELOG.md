@@ -7,6 +7,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Collections and DLC split into games** ([guide](docs/bundles.md)): a game sold as one Steam app
+  with one achievement list (Kingdom Hearts 1.5+2.5) can be split into groups, each with its own
+  progress bar and 100%, shown as a row of parts on the game page. Groups are suggested from the
+  achievements' API names (and named from IGDB when it's set up); rules place achievements by API
+  name, position in Steam's list or a word, the rest is moved by hand, and new achievements from
+  Steam follow the rules. A split downloads as a file another server can import, and files for
+  known collections can ship with Savepoint.
 - **Which games Steam refused**: Settings → Steam lists the games whose achievements Steam didn't
   give on the last sync, each with Steam's answer and a link to the game.
 

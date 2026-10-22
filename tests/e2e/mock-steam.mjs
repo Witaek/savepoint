@@ -64,8 +64,9 @@ const GAMES = [
 		playtime: 5760,
 		lastPlayed: now - 3 * DAY,
 		unlocked: 61,
+		// Test data shaped like a collection: API names prefixed per game (25 each).
 		achievements: Array.from({ length: 100 }, (_, i) => [
-			`KH_${String(i).padStart(3, '0')}`,
+			`${['KH1', 'COM', 'KH2', 'BBS'][Math.floor(i / 25)]}_${String(i).padStart(3, '0')}`,
 			`Keyblade Trial ${i + 1}`,
 			`A test of the heart (${i + 1})`,
 			i % 25 === 24 ? 1 : 0,

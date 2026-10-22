@@ -167,12 +167,70 @@ export const achievements = sqliteTable(
 		/** Share of Steam players who have it (0–100). */
 		globalPercent: real('global_percent'),
 		sortOrder: integer('sort_order').notNull().default(0),
+		/** The game of a collection, or the DLC, this achievement belongs to (see splits.ts). */
+		groupId: integer('group_id').references(() => achievementGroups.id, { onDelete: 'set null' }),
+		/** Put in its group by hand: rules leave it where it is. */
+		groupManual: integer('group_manual', { mode: 'boolean' }).notNull().default(false),
 		createdBy: integer('created_by').references(() => users.id, { onDelete: 'set null' }),
 		createdAt: timestamp('created_at')
 			.notNull()
 			.$defaultFn(() => new Date())
 	},
-	(t) => [uniqueIndex('achievements_game_key_idx').on(t.gameId, t.key)]
+	(t) => [
+		uniqueIndex('achievements_game_key_idx').on(t.gameId, t.key),
+		index('achievements_group_idx').on(t.groupId)
+	]
+);
+
+// ---------- Splitting a game into groups (bundles, DLC) ----------
+
+export type GroupKind = 'game' | 'dlc';
+
+/**
+ * A part of a game with its own progress: one game of a collection (Birth by Sleep in Kingdom
+ * Hearts 1.5+2.5), or a DLC. Shared by everyone, like the game.
+ */
+export const achievementGroups = sqliteTable(
+	'achievement_groups',
+	{
+		id: integer('id').primaryKey({ autoIncrement: true }),
+		gameId: integer('game_id')
+			.notNull()
+			.references(() => games.id, { onDelete: 'cascade' }),
+		name: text('name').notNull(),
+		kind: text('kind').$type<GroupKind>().notNull().default('game'),
+		sortOrder: integer('sort_order').notNull().default(0),
+		createdAt: timestamp('created_at')
+			.notNull()
+			.$defaultFn(() => new Date())
+	},
+	(t) => [index('achievement_groups_game_idx').on(t.gameId)]
+);
+
+export type SplitRuleType = 'prefix' | 'range' | 'contains';
+
+/**
+ * Puts a game's Steam achievements into groups, in order: the first rule that matches wins.
+ * prefix: API name starts with `value`; range: Steam order `from`–`to` (1-based, inclusive);
+ * contains: name or description contains `value` (any case).
+ */
+export const splitRules = sqliteTable(
+	'split_rules',
+	{
+		id: integer('id').primaryKey({ autoIncrement: true }),
+		gameId: integer('game_id')
+			.notNull()
+			.references(() => games.id, { onDelete: 'cascade' }),
+		groupId: integer('group_id')
+			.notNull()
+			.references(() => achievementGroups.id, { onDelete: 'cascade' }),
+		type: text('type').$type<SplitRuleType>().notNull(),
+		value: text('value').notNull().default(''),
+		rangeFrom: integer('range_from'),
+		rangeTo: integer('range_to'),
+		sortOrder: integer('sort_order').notNull().default(0)
+	},
+	(t) => [index('split_rules_game_idx').on(t.gameId)]
 );
 
 // ---------- Each person's library ----------
@@ -259,4 +317,6 @@ export const notificationTargets = sqliteTable(
 export type UserRow = typeof users.$inferSelect;
 export type GameRow = typeof games.$inferSelect;
 export type AchievementRow = typeof achievements.$inferSelect;
+export type AchievementGroupRow = typeof achievementGroups.$inferSelect;
+export type SplitRuleRow = typeof splitRules.$inferSelect;
 export type LibraryEntryRow = typeof libraryEntries.$inferSelect;

@@ -29,6 +29,9 @@
   you tap **Reveal**, a per-game sync button, notes and a rating.
 - **Any platform**: add Switch, PlayStation or retro games from search (IGDB) or by hand. A game on
   Steam that you play elsewhere uses Steam's achievement list, ticked by you.
+- **Collections and DLC split into games**: Kingdom Hearts 1.5+2.5 as four progress bars. Groups
+  are suggested from the achievements' API names; rules and a few taps place the rest; a split can
+  be shared as a file ([guide](docs/bundles.md)).
 - **Checklists**: your own 100% beyond achievements (every boss, every ending), counted in the
   completion and shared with everyone who has the game.
 - **Perfection achieved**: a 100% gets a full-screen moment once, a gold frame in the library and
@@ -56,21 +59,22 @@ Edit `.env`: set `STEAM_API_KEY` and, if you're not on CasaOS, `DATA_DIR=./data`
 
 ## Documentation
 
-| Guide                                           | What it covers                                              |
-| ----------------------------------------------- | ----------------------------------------------------------- |
-| [Getting API keys](docs/api-keys.md)            | Steam Web API key, Steam privacy settings, IGDB (optional)  |
-| [Deploying on CasaOS](docs/deploy-casaos.md)    | Installing from the CasaOS dashboard, next to Episodic      |
-| [HTTPS with Tailscale](docs/https-tailscale.md) | `https://…ts.net:8443` and installing the app on your phone |
-| [Configuration](docs/configuration.md)          | Every environment variable and background job               |
-| [Architecture](docs/architecture.md)            | Data model, Steam sync, pages                               |
-| [Development](docs/development.md)              | Running from source with a mock Steam API, tests, releasing |
+| Guide                                           | What it covers                                                 |
+| ----------------------------------------------- | -------------------------------------------------------------- |
+| [Getting API keys](docs/api-keys.md)            | Steam Web API key, Steam privacy settings, IGDB (optional)     |
+| [Deploying on CasaOS](docs/deploy-casaos.md)    | Installing from the CasaOS dashboard, next to Episodic         |
+| [HTTPS with Tailscale](docs/https-tailscale.md) | `https://…ts.net:8443` and installing the app on your phone    |
+| [Collections and DLC](docs/bundles.md)          | Splitting a game into games or DLC, each with its own progress |
+| [Configuration](docs/configuration.md)          | Every environment variable and background job                  |
+| [Architecture](docs/architecture.md)            | Data model, Steam sync, pages                                  |
+| [Development](docs/development.md)              | Running from source with a mock Steam API, tests, releasing    |
 
 ## Roadmap
 
 - [x] **0.1**: Steam library and achievements, sync, any-platform games, checklists, Hall of Fame,
       stats, notifications, Ember look
-- [ ] **Bundles split per game**: Kingdom Hearts 1.5+2.5 as four progress bars (rules on API names
-      and order, a split editor, shipped splits for known collections), and DLC groups
+- [x] **Collections and DLC split into games**: groups with their own progress, rules on API
+      names, order or words, moves by hand, suggestions, split files (shipped splits welcome)
 - [ ] **Hunting tools**: missable flags, pinned targets, HowLongToBeat time to 100%
 - [ ] **Wishlist prices**: IsThereAnyDeal alerts, release calendar
 - [ ] **More platforms**: RetroAchievements, PlayStation trophies, Xbox

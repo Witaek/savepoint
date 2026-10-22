@@ -27,8 +27,49 @@
 	let filter = $state<Filter>('all');
 	let revealed = $state(new Set<number>());
 
-	const steamList = $derived(data.achievements.filter((a) => a.source === 'steam'));
-	const checklist = $derived(data.achievements.filter((a) => a.source === 'custom'));
+	// A collection split into games (or a game with DLC groups) shows one tab per group, each with
+	// its own progress; "Other" holds what no group took, "All" everything.
+	type Tab = number | 'other' | 'all';
+	let pickedTab = $state<Tab | null>(null);
+	const ungrouped = $derived(
+		data.achievements.filter((a) => a.source === 'steam' && a.groupId === null).length
+	);
+	const tab = $derived<Tab>(pickedTab ?? data.groups[0]?.id ?? 'all');
+	const inTab = (a: { groupId: number | null }) =>
+		tab === 'all' ? true : tab === 'other' ? a.groupId === null : a.groupId === tab;
+	const progressOf = (list: { unlockedAt: Date | null }[]) => ({
+		unlocked: list.filter((a) => a.unlockedAt).length,
+		total: list.length
+	});
+	const tabs = $derived(
+		data.groups.length
+			? [
+					...data.groups.map((g) => ({
+						id: g.id as Tab,
+						name: g.name,
+						dlc: g.kind === 'dlc',
+						progress: progressOf(data.achievements.filter((a) => a.groupId === g.id))
+					})),
+					...(ungrouped
+						? [
+								{
+									id: 'other' as Tab,
+									name: 'Other',
+									dlc: false,
+									progress: progressOf(
+										data.achievements.filter((a) => a.source === 'steam' && a.groupId === null)
+									)
+								}
+							]
+						: []),
+					{ id: 'all' as Tab, name: 'All', dlc: false, progress: data.progress }
+				]
+			: []
+	);
+	const tabName = $derived(tabs.find((t) => t.id === tab)?.name ?? '');
+
+	const steamList = $derived(data.achievements.filter((a) => a.source === 'steam' && inTab(a)));
+	const checklist = $derived(data.achievements.filter((a) => a.source === 'custom' && inTab(a)));
 	const shown = $derived.by(() => {
 		const keep = (a: (typeof data.achievements)[0]) =>
 			filter === 'all' ? true : filter === 'locked' ? !a.unlockedAt : Boolean(a.unlockedAt);
@@ -37,10 +78,8 @@
 			.filter(keep)
 			.sort((a, b) => Number(Boolean(a.unlockedAt)) - Number(Boolean(b.unlockedAt)));
 	});
-	const steamProgress = $derived({
-		unlocked: steamList.filter((a) => a.unlockedAt).length,
-		total: steamList.length
-	});
+	const steamProgress = $derived(progressOf(steamList));
+	const hasSteamList = $derived(data.achievements.some((a) => a.source === 'steam'));
 	const checklistDone = $derived(checklist.filter((a) => a.unlockedAt).length);
 
 	let heroFailed = $state(false);
@@ -257,6 +296,37 @@
 			</section>
 		{/if}
 
+		<!-- Games of a collection, DLC -->
+		{#if tabs.length}
+			<nav
+				class="chip-scroller -mx-4 flex gap-2 overflow-x-auto px-4 md:mx-0 md:flex-wrap md:px-0"
+				aria-label="Parts of this game"
+			>
+				{#each tabs as t (t.id)}
+					{@const done = isPerfect(t.progress)}
+					<button
+						class="grid min-w-36 shrink-0 gap-1.5 border px-3 py-2 text-left transition-colors {tab ===
+						t.id
+							? 'border-ember bg-gradient-to-b from-ember/15 to-transparent'
+							: 'border-[#2a241b] hover:border-ember-dim'}"
+						aria-pressed={tab === t.id}
+						onclick={() => (pickedTab = t.id)}
+					>
+						<span class="font-display text-[12px] leading-tight tracking-[0.06em] text-ash"
+							>{t.name}{#if t.dlc}<span class="label ml-1.5 !text-[0.6rem] !text-soul">DLC</span
+								>{/if}</span
+						>
+						<span class="font-mono text-[11px] {done ? 'text-gold' : 'text-dust'}"
+							>{done
+								? '✦ 100%'
+								: `${t.progress.unlocked} / ${t.progress.total} · ${percent(t.progress)}%`}</span
+						>
+						<EmberBar value={percent(t.progress)} gold={done} class="!h-1" label={t.name} />
+					</button>
+				{/each}
+			</nav>
+		{/if}
+
 		<!-- Achievements -->
 		{#if steamList.length}
 			<section class="grid gap-3" aria-labelledby="ach-title">
@@ -266,7 +336,8 @@
 				>
 					<div class="flex flex-wrap items-center gap-3">
 						<h2 id="ach-title" class="rule-title flex-1">
-							Achievements · {steamProgress.unlocked} / {steamProgress.total}
+							{tabs.length && tab !== 'all' ? tabName : 'Achievements'} · {steamProgress.unlocked} /
+							{steamProgress.total}
 						</h2>
 						<div
 							class="grid w-full grid-cols-3 gap-1.5 sm:flex sm:w-auto"
@@ -370,10 +441,21 @@
 					{/each}
 				</ul>
 			</section>
+		{:else if hasSteamList}
+			<p class="text-dust italic">No Steam achievements in {tabName}.</p>
 		{:else if game.steamAppId && game.schemaUpdatedAt}
 			<p class="text-dust italic">
 				This game has no Steam achievements. Make your own checklist below.
 			</p>
+		{/if}
+		{#if hasSteamList}
+			<a
+				href="/game/{game.id}/split"
+				class="label -mt-4 flex min-h-10 items-center justify-self-start hover:!text-ash"
+				>{data.groups.length
+					? 'Edit how this game is split →'
+					: 'A collection, or has DLC? Split it into games →'}</a
+			>
 		{/if}
 
 		<!-- Checklist -->
@@ -428,6 +510,7 @@
 					use:enhance={toastResult({ reset: true })}
 					class="panel grid gap-3 p-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end"
 				>
+					{#if typeof tab === 'number'}<input type="hidden" name="groupId" value={tab} />{/if}
 					<div class="grid gap-1.5">
 						<label class="label" for="item-name">Item</label>
 						<!-- svelte-ignore a11y_autofocus -->

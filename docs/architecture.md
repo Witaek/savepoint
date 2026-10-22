@@ -17,13 +17,15 @@ SvelteKit server (adapter-node, port 3000)
 
 ## Data model
 
-| Table               | One row per                   | Notes                                                                             |
-| ------------------- | ----------------------------- | --------------------------------------------------------------------------------- |
-| `games`             | game, shared by everyone      | Identified by Steam app id when it's on Steam, else IGDB id, else added by hand.  |
-| `achievements`      | achievement or checklist item | `source` = `steam` (keyed by API name) or `custom` (checklist items, shared).     |
-| `library_entries`   | person × game                 | Status, platform, playtime, `steam_owned`, notes, rating, `perfected_at`.         |
-| `user_achievements` | person × unlocked achievement | `source` = `steam` (mirrored) or `manual` (ticked). Index on (user, unlocked_at). |
-| `users`             | account                       | Linked SteamID and the state of its last sync.                                    |
+| Table                | One row per                         | Notes                                                                                     |
+| -------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------- |
+| `games`              | game, shared by everyone            | Identified by Steam app id when it's on Steam, else IGDB id, else added by hand.          |
+| `achievements`       | achievement or checklist item       | `source` = `steam` (keyed by API name) or `custom` (checklist items, shared).             |
+| `library_entries`    | person × game                       | Status, platform, playtime, `steam_owned`, notes, rating, `perfected_at`.                 |
+| `user_achievements`  | person × unlocked achievement       | `source` = `steam` (mirrored) or `manual` (ticked). Index on (user, unlocked_at).         |
+| `users`              | account                             | Linked SteamID and the state of its last sync.                                            |
+| `achievement_groups` | part of a game, shared              | A game of a collection or a DLC, with its own progress (`kind`: game or dlc).             |
+| `split_rules`        | rule placing achievements in groups | `prefix` (API name), `range` (Steam order) or `contains` (name or description), in order. |
 
 Progress (unlocked / total) is one grouped query per page over `achievements` ⟕
 `user_achievements`, so it's never stored twice and never out of date. Checklist items count like
@@ -50,17 +52,32 @@ ticked; on another platform (PS5, Switch…) you tick Steam's list yourself.
 - **Notifications:** one message per game with new unlocks, and a gold one at 100%, to ntfy topics
   and Discord webhooks. The first import never notifies.
 
+## Splitting a game (`services/splits.ts`, `split-rules.ts`)
+
+Steam gives one achievement list per app and nothing about which game of a collection or which DLC
+an achievement belongs to. `achievements.group_id` holds its group: rules set it (first match in
+`split_rules` order wins, `applySplit`), unless `group_manual` says it was moved by hand.
+`applySplit` runs after every change to rules or groups and, through `refreshSplit`, after each
+read of Steam's list, so new achievements find their group. Suggestions come from API-name
+prefixes (`suggestPrefixes`) and, with IGDB, the games listed in the bundle (`bundleContents`).
+
+A split exports to and imports from a small JSON file (`splitFileSchema`); files in
+`src/lib/server/splits/<app id>.json` are bundled (`import.meta.glob`) and applied the first time a
+game is read if it has no groups. Progress per group is computed on the game page from the list
+it already loads.
+
 ## Pages
 
-| Route           | What                                                                                  |
-| --------------- | ------------------------------------------------------------------------------------- |
-| `/`             | Bonfire: the game being played and what's left, totals, Almost there, recent unlocks  |
-| `/library`      | Grid with status chips, sorting and a detail panel; Unsorted becomes a triage list    |
-| `/game/[id]`    | Achievements (locked first, rarity, hidden blurred), checklist, status, notes, rating |
-| `/search`       | IGDB or Steam store search, and adding a game by hand                                 |
-| `/hall-of-fame` | Perfected games with their rarest achievement                                         |
-| `/stats`        | Totals, unlocks per month, completion bands, rarest unlocks, most played              |
-| `/settings`     | Steam link and sync, notifications, display, account, users, backups, jobs            |
+| Route              | What                                                                                  |
+| ------------------ | ------------------------------------------------------------------------------------- |
+| `/`                | Bonfire: the game being played and what's left, totals, Almost there, recent unlocks  |
+| `/library`         | Grid with status chips, sorting and a detail panel; Unsorted becomes a triage list    |
+| `/game/[id]`       | Achievements (locked first, rarity, hidden blurred), checklist, status, notes, rating |
+| `/game/[id]/split` | Groups, rules, moves by hand, suggestions, split files                                |
+| `/search`          | IGDB or Steam store search, and adding a game by hand                                 |
+| `/hall-of-fame`    | Perfected games with their rarest achievement                                         |
+| `/stats`           | Totals, unlocks per month, completion bands, rarest unlocks, most played              |
+| `/settings`        | Steam link and sync, notifications, display, account, users, backups, jobs            |
 
 ## Look
 
