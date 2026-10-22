@@ -120,6 +120,8 @@ const GAMES = [
 
 /** Lets a test unlock more: POST /mock/unlock?appid=…&count=… */
 const extraUnlocks = new Map();
+/** Games whose achievements Steam refuses, as it does for some games: POST /mock/refuse?appid=… */
+const refused = new Set();
 
 const byApp = new Map(GAMES.map((g) => [g.appid, g]));
 const iconUrl = (game, name, gray) =>
@@ -199,6 +201,9 @@ function routes(url) {
 			}
 		};
 	}
+	if (p.startsWith('/ISteamUserStats/GetPlayerAchievements/') && refused.has(appid)) {
+		return [403, { playerstats: { error: 'Profile is not public', success: false } }];
+	}
 	if (p.startsWith('/ISteamUserStats/GetPlayerAchievements/')) {
 		if (!game || game.achievements.length === 0) {
 			return [400, { playerstats: { error: 'Requested app has no stats', success: false } }];
@@ -262,6 +267,11 @@ function routes(url) {
 
 const server = createServer((req, res) => {
 	const url = new URL(req.url ?? '/', `http://localhost:${PORT}`);
+	if (req.method === 'POST' && url.pathname === '/mock/refuse') {
+		refused.add(Number(url.searchParams.get('appid')));
+		res.writeHead(204).end();
+		return;
+	}
 	if (req.method === 'POST' && url.pathname === '/mock/unlock') {
 		const appid = Number(url.searchParams.get('appid'));
 		extraUnlocks.set(

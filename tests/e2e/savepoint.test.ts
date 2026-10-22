@@ -131,6 +131,18 @@ test('reaching 100% is celebrated once and enshrined', async () => {
 	await expect(page.getByText('2 games taken to 100%.')).toBeVisible();
 });
 
+test('Settings names the games Steam refused, and why', async () => {
+	await fetch(`${MOCK}/mock/refuse?appid=367520`, { method: 'POST' });
+	await page.goto('/settings');
+	await page.getByRole('button', { name: 'Re-read everything' }).click();
+	await expect(page.getByText(/1 game Steam didn't answer for/)).toBeVisible({ timeout: 30_000 });
+	await page.getByText('1 game Steam didn’t give achievements for').click();
+	const item = page.getByRole('link', { name: /Hollow Knight/ });
+	await expect(item).toContainText('Steam answered 403: Profile is not public');
+	await item.click();
+	await expect(page.getByRole('heading', { name: 'Hollow Knight' })).toBeVisible();
+});
+
 test('fits the narrowest phone, with Settings, Stats and Back at hand', async ({ browser }) => {
 	// iPhone SE: 320px. A phone browser widens its layout to fit content that overflows, so
 	// "nothing is wider than the page" isn't enough: the page must stay as wide as the screen.

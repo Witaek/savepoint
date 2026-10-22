@@ -61,6 +61,8 @@ export interface SteamSyncState {
 	message?: string;
 	done?: number;
 	total?: number;
+	/** Games whose achievements Steam didn't give on the last full sync, and why. */
+	skipped?: { gameId: number; name: string; reason: string }[];
 }
 
 export const users = sqliteTable('users', {

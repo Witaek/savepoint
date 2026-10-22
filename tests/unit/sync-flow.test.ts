@@ -244,10 +244,16 @@ describe('a game Steam refuses', () => {
 		expect(library.progressFor(userId, gameId(60))).toEqual({ unlocked: 1, total: 2 });
 		const user = getDb().select().from(schema.users).where(eq(schema.users.id, userId)).get()!;
 		expect(user.steamSync.status).toBe('idle');
+		// Settings lists it, with Steam's own words.
+		expect(user.steamSync.skipped).toEqual([
+			{ gameId: gameId(50), name: 'Refused', reason: 'Steam answered 403: Profile is not public' }
+		]);
 
 		steam.refused.clear();
 		await sync.fullSync(userId);
 		expect(entry(50).achievementsSyncedAt).toBeInstanceOf(Date);
+		const after = getDb().select().from(schema.users).where(eq(schema.users.id, userId)).get()!;
+		expect(after.steamSync.skipped).toEqual([]);
 	});
 });
 

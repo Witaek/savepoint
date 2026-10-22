@@ -17,6 +17,7 @@
 		message?: string;
 		done?: number;
 		total?: number;
+		skipped?: { gameId: number; name: string; reason: string }[];
 		running: boolean;
 	} | null>(null);
 	let poll: ReturnType<typeof setInterval> | undefined;
@@ -140,6 +141,32 @@
 					</p>
 				{:else if syncView.message}
 					<p class="text-sm text-dust">Last sync: {syncView.message}.</p>
+				{/if}
+				{#if !syncView.running && syncView.skipped?.length}
+					<details class="border border-[#2a241b] bg-[#0e0c09] p-3 text-sm">
+						<summary class="cursor-pointer text-ash">
+							{syncView.skipped.length === 1
+								? '1 game Steam didn’t give achievements for'
+								: `${syncView.skipped.length} games Steam didn’t give achievements for`}
+						</summary>
+						<p class="mt-2 text-dust">
+							Their achievements are tried again on the next sync. If one keeps coming back, Steam
+							may not track achievements for it (a tool, a test server, a removed game).
+						</p>
+						<ul class="mt-2 grid gap-1">
+							{#each syncView.skipped as game (game.gameId)}
+								<li>
+									<a
+										href="/game/{game.gameId}"
+										class="flex min-h-10 flex-col justify-center hover:text-ember"
+										><span>{game.name}</span><span class="font-mono text-[11px] text-dust"
+											>{game.reason}</span
+										></a
+									>
+								</li>
+							{/each}
+						</ul>
+					</details>
 				{/if}
 				<!-- Full-width on phones: Sync now on its own row, the other two side by side. -->
 				<div class="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">

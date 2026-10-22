@@ -10,6 +10,7 @@ import {
 	type LibraryEntryRow,
 	type SteamSyncState
 } from '../db/schema';
+import { ProviderError } from '../providers/http';
 import {
 	SteamPrivateError,
 	getOwnedGames,
@@ -336,16 +337,28 @@ async function pool<T>(items: T[], limit: number, task: (item: T, index: number)
 	await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
 }
 
+/** Steam's answer for a game it refused, in a few words ("403: Profile is not public"). */
+export function refusalReason(error: unknown): string {
+	if (error instanceof ProviderError) {
+		if (error.status === undefined) return "Steam didn't respond";
+		const said = error.message.match(/"error"\s*:\s*"([^"]+)"/)?.[1];
+		return said ? `Steam answered ${error.status}: ${said}` : `Steam answered ${error.status}`;
+	}
+	return error instanceof Error ? error.message : String(error);
+}
+
+type Skipped = NonNullable<SteamSyncState['skipped']>[number];
+
 async function syncGames(
 	userId: number,
 	steamId: string,
 	gameIds: number[],
 	{ notify, progress }: { notify: boolean; progress?: (done: number, total: number) => void }
-): Promise<{ games: number; unlocks: number; skipped: number }> {
+): Promise<{ games: number; unlocks: number; skipped: Skipped[] }> {
 	const batches: UnlockBatch[] = [];
 	let done = 0;
 	let unlocks = 0;
-	let skipped = 0;
+	const skipped: Skipped[] = [];
 	await pool(gameIds, 4, async (gameId) => {
 		try {
 			const result = await syncGameAchievements(userId, steamId, gameId);
@@ -364,8 +377,8 @@ async function syncGames(
 		} catch (error) {
 			// One game Steam refuses doesn't stop the others. It isn't marked as read, so the next
 			// sync tries it again.
-			skipped++;
 			const game = getGame(gameId);
+			skipped.push({ gameId, name: game?.name ?? `Game ${gameId}`, reason: refusalReason(error) });
 			console.warn(
 				`[steam] achievements of ${game?.name ?? gameId} (app ${game?.steamAppId}) not read: ${String(error)}`
 			);
@@ -440,13 +453,14 @@ export async function fullSync(userId: number, { all = false } = {}): Promise<st
 			`${owned.length} games`,
 			`${result.unlocks} ${firstSync ? 'achievements imported' : 'new unlocks'}`,
 			wishlisted ? `${wishlisted} added to the wishlist` : null,
-			result.skipped
-				? `${result.skipped} game${result.skipped === 1 ? '' : 's'} Steam didn't answer for (tried again next sync)`
+			result.skipped.length
+				? `${result.skipped.length} game${result.skipped.length === 1 ? '' : 's'} Steam didn't answer for (tried again next sync)`
 				: null
 		]
 			.filter(Boolean)
 			.join(', ');
-		setState(userId, { status: 'idle', message }, { syncedAt: new Date() });
+		const skipped = result.skipped.sort((a, b) => a.name.localeCompare(b.name)).slice(0, 50);
+		setState(userId, { status: 'idle', message, skipped }, { syncedAt: new Date() });
 		return message;
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);

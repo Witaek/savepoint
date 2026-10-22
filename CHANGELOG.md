@@ -5,6 +5,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **Which games Steam refused**: Settings → Steam lists the games whose achievements Steam didn't
+  give on the last sync, each with Steam's answer and a link to the game.
+
 ### Changed
 
 - **Phone navigation**: the tab bar is Bonfire, Library, Search, Fame and **Stats** (Stats had no tab);
