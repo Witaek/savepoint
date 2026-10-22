@@ -34,11 +34,12 @@ jobs:
   image:
     needs: test
     runs-on: ubuntu-latest
-    # A push to main and its version tag build the same commit: run them one after the other so
-    # they don't fight over the build cache (the second reuses the first's layers), and fail a
-    # hung build instead of letting it run for hours.
+    # One image build at a time, whatever the commit: two builds at once compete for the build
+    # cache and the emulated arm64 build, and both ran past the time limit. A push made while a
+    # build runs waits for it; if more pushes come, only the newest waits (GitHub replaces the
+    # pending run). A hung build fails at the time limit instead of running for hours.
     concurrency:
-      group: image-${{ github.sha }}
+      group: image
       cancel-in-progress: false
     timeout-minutes: 45
     permissions:
