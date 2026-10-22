@@ -1,0 +1,85 @@
+# Savepoint: self-hosted game library and achievement tracker.
+# Works with plain Docker Compose (values come from a .env file next to this one)
+# and with CasaOS (Custom Install → Import). See docs/deploy-casaos.md.
+name: savepoint
+
+services:
+  savepoint:
+    image: ghcr.io/witaek/savepoint:latest
+    container_name: savepoint
+    restart: unless-stopped
+    ports:
+      - '${PORT:-8788}:3000'
+    environment:
+      # Steam Web API key (free, steamcommunity.com/dev/apikey). Needed to import your Steam games.
+      STEAM_API_KEY: ${STEAM_API_KEY:-}
+      # Language of achievement names: english, french, german, spanish, …
+      STEAM_LANGUAGE: ${STEAM_LANGUAGE:-english}
+      # Optional: IGDB (Twitch app) credentials, to search games on every platform.
+      IGDB_CLIENT_ID: ${IGDB_CLIENT_ID:-}
+      IGDB_CLIENT_SECRET: ${IGDB_CLIENT_SECRET:-}
+      # The main address you open Savepoint from, e.g. https://casaos.your-tailnet.ts.net:8443
+      APP_URL: ${APP_URL:-}
+      # Other addresses you use, comma separated, e.g. http://192.168.1.20:8788
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-}
+      STORE_COUNTRY: ${STORE_COUNTRY:-US}
+      TZ: ${TZ:-Etc/UTC}
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-14}
+      # Optional: create the first admin automatically instead of using the setup page.
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+    volumes:
+      - ${DATA_DIR:-/DATA/AppData/savepoint}:/data
+    x-casaos:
+      envs:
+        - container: STEAM_API_KEY
+          description:
+            en_us: Steam Web API key (free at steamcommunity.com/dev/apikey).
+        - container: STEAM_LANGUAGE
+          description:
+            en_us: Language of achievement names (english, french, german, …).
+        - container: IGDB_CLIENT_ID
+          description:
+            en_us: Optional. Twitch app client ID, to search games on every platform (IGDB).
+        - container: IGDB_CLIENT_SECRET
+          description:
+            en_us: Optional. Twitch app client secret (IGDB).
+        - container: APP_URL
+          description:
+            en_us: Main URL you open Savepoint from (e.g. your Tailscale HTTPS address).
+        - container: ALLOWED_ORIGINS
+          description:
+            en_us: Other URLs you use, comma separated (e.g. http://192.168.1.20:8788).
+        - container: TZ
+          description:
+            en_us: Your time zone (e.g. Europe/Paris).
+      ports:
+        - container: '3000'
+          description:
+            en_us: Web interface
+      volumes:
+        - container: /data
+          description:
+            en_us: Database and backups
+
+x-casaos:
+  architectures:
+    - amd64
+    - arm64
+  main: savepoint
+  author: Witaek
+  developer: Witaek
+  category: Gaming
+  index: /
+  port_map: '8788'
+  icon: https://raw.githubusercontent.com/Witaek/savepoint/main/static/icons/icon-512.png
+  title:
+    en_us: Savepoint
+  tagline:
+    en_us: Your games, and every achievement in them
+  description:
+    en_us: >-
+      Self-hosted game library and achievement tracker. Imports your Steam games, playtime and
+      achievements, keeps them in sync, and tracks games from any platform with checklists.

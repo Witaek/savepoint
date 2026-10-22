@@ -1,0 +1,228 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/cinzel';
+@import '@fontsource/spectral/400.css';
+@import '@fontsource/spectral/400-italic.css';
+@import '@fontsource/spectral/600.css';
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';
+
+/*
+ * Ember: dark stone, ash text and one warm ember accent. Gold is kept for 100% games.
+ * One dark look on purpose (covers and the bonfire glow need the dark).
+ */
+@theme {
+	--font-display: 'Cinzel Variable', 'Trajan Pro', 'Times New Roman', serif;
+	--font-sans: 'Spectral', Georgia, 'Times New Roman', serif;
+	--font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+	--color-abyss: #0c0b09;
+	--color-stone: #16140f;
+	--color-stone-2: #1d1a14;
+	--color-stone-3: #2b261d;
+	--color-rule: #3a3226;
+	--color-ash: #ebe3d1;
+	--color-dust: #a39780;
+	--color-faint: #6e6352;
+	--color-ember: #e3a54b;
+	--color-ember-hot: #ff8a3a;
+	--color-ember-dim: #6b4d22;
+	--color-gold: #ffd28a;
+	--color-soul: #a9cbdc;
+	--color-blood: #d0473b;
+	--color-moss: #8fb07a;
+}
+
+:root {
+	color-scheme: dark;
+}
+
+html,
+body {
+	background: var(--color-abyss);
+	color: var(--color-ash);
+	-webkit-tap-highlight-color: transparent;
+	text-rendering: optimizeLegibility;
+}
+
+body {
+	font-family: var(--font-sans);
+	font-size: 16px;
+	overscroll-behavior-y: none;
+	background-image:
+		radial-gradient(ellipse 70% 40% at 50% -5%, rgb(227 165 75 / 0.09), transparent 70%),
+		radial-gradient(ellipse 50% 30% at 50% 105%, rgb(255 138 58 / 0.05), transparent 70%);
+	background-attachment: fixed;
+}
+
+button,
+[role='tab'],
+select {
+	-webkit-user-select: none;
+	user-select: none;
+	cursor: pointer;
+}
+
+:focus-visible {
+	outline: 2px solid var(--color-ember);
+	outline-offset: 2px;
+}
+
+@layer components {
+	/* Small engraved capitals: section titles, labels, buttons. */
+	.engraved {
+		font-family: var(--font-display);
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+	}
+	.label {
+		font-family: var(--font-mono);
+		font-size: 0.68rem;
+		letter-spacing: 0.16em;
+		text-transform: uppercase;
+		color: var(--color-dust);
+	}
+	/* A heading with a rule fading out to the right. */
+	.rule-title {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		font-family: var(--font-display);
+		font-size: 0.78rem;
+		letter-spacing: 0.16em;
+		text-transform: uppercase;
+		color: var(--color-dust);
+	}
+	.rule-title::after {
+		content: '';
+		flex: 1;
+		height: 1px;
+		background: linear-gradient(90deg, var(--color-rule), transparent);
+	}
+	.panel {
+		border: 1px solid #2a241b;
+		background: linear-gradient(180deg, #14110c, #0d0b08);
+	}
+	.btn {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
+		padding: 0.55rem 1rem;
+		font-family: var(--font-display);
+		font-size: 0.78rem;
+		font-weight: 600;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		border: 1px solid var(--color-ember-dim);
+		background: linear-gradient(180deg, #2a2114, #17120b);
+		color: var(--color-ash);
+		transition:
+			border-color 0.15s,
+			box-shadow 0.15s,
+			transform 0.1s;
+	}
+	.btn:hover {
+		border-color: var(--color-ember);
+		box-shadow: 0 0 18px -6px rgb(255 150 60 / 0.6);
+	}
+	.btn:active {
+		transform: scale(0.98);
+	}
+	.btn:disabled {
+		opacity: 0.5;
+		pointer-events: none;
+	}
+	.btn-ghost {
+		background: transparent;
+		border-color: var(--color-rule);
+		color: var(--color-dust);
+	}
+	.btn-ghost:hover {
+		color: var(--color-ash);
+		border-color: var(--color-dust);
+		box-shadow: none;
+	}
+	.btn-danger {
+		background: transparent;
+		border-color: rgb(208 71 59 / 0.5);
+		color: var(--color-blood);
+	}
+	.btn-danger:hover {
+		border-color: var(--color-blood);
+		box-shadow: none;
+	}
+	.input {
+		width: 100%;
+		border: 1px solid var(--color-rule);
+		background: #100e0a;
+		color: var(--color-ash);
+		padding: 0.6rem 0.8rem;
+		font-family: var(--font-sans);
+		font-size: 1rem;
+		outline: none;
+	}
+	.input:focus {
+		border-color: var(--color-ember);
+		box-shadow: 0 0 0 3px rgb(227 165 75 / 0.15);
+	}
+	.input::placeholder {
+		color: var(--color-faint);
+	}
+	.chip {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+		padding: 0.3rem 0.7rem;
+		border: 1px solid var(--color-rule);
+		font-family: var(--font-display);
+		font-size: 0.72rem;
+		letter-spacing: 0.1em;
+		color: var(--color-dust);
+		white-space: nowrap;
+	}
+	.chip[aria-current='true'],
+	.chip[aria-pressed='true'] {
+		border-color: var(--color-ember);
+		color: var(--color-ash);
+		background: rgb(227 165 75 / 0.1);
+	}
+	.chip .n {
+		font-family: var(--font-mono);
+		color: var(--color-faint);
+		letter-spacing: 0;
+	}
+	/* Progress bar that glows like embers. */
+	.ember-bar {
+		position: relative;
+		height: 6px;
+		background: #1c1812;
+		border: 1px solid var(--color-rule);
+		overflow: hidden;
+	}
+	.ember-bar > i {
+		position: absolute;
+		inset: 0 auto 0 0;
+		background: linear-gradient(90deg, #8a5a1c, var(--color-ember), #ffd28a);
+		box-shadow: 0 0 12px rgb(255 170 80 / 0.6);
+	}
+	.ember-bar.gold > i {
+		background: linear-gradient(90deg, #ffe2a0, #fff3d0);
+	}
+	.miss-tag {
+		font-family: var(--font-mono);
+		font-size: 0.6rem;
+		letter-spacing: 0.1em;
+		color: var(--color-blood);
+		border: 1px solid currentColor;
+		padding: 0 0.3rem;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		transition-duration: 0.01ms !important;
+	}
+}

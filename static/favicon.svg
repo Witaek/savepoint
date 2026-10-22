@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+	<defs>
+		<radialGradient id="glow" cx="50%" cy="72%" r="55%">
+			<stop offset="0" stop-color="#ff8a3a" stop-opacity=".55" />
+			<stop offset="1" stop-color="#ff8a3a" stop-opacity="0" />
+		</radialGradient>
+		<linearGradient id="flame" x1="0" y1="1" x2="0" y2="0">
+			<stop offset="0" stop-color="#ff8a3a" />
+			<stop offset=".55" stop-color="#e3a54b" />
+			<stop offset="1" stop-color="#ffe2a0" />
+		</linearGradient>
+	</defs>
+	<rect width="64" height="64" rx="12" fill="#0c0b09" />
+	<rect width="64" height="64" rx="12" fill="url(#glow)" />
+	<!-- The flame -->
+	<path
+		d="M32 14c3 7 11 11 11 22a11 11 0 0 1-22 0c0-6 3-9 5-12 1 4 3 6 5 6-2-6-1-11 1-16z"
+		fill="url(#flame)"
+	/>
+	<!-- The sword planted in it, slightly tilted -->
+	<g transform="rotate(9 32 46)" fill="#ebe3d1">
+		<circle cx="32" cy="8.5" r="2.4" />
+		<rect x="30.8" y="10" width="2.4" height="6" />
+		<rect x="25" y="16" width="14" height="2.6" rx="1.3" />
+		<path d="M29.6 18.6h4.8L33 47h-2z" />
+	</g>
+	<!-- Ash and stones -->
+	<path d="M16 51h32" stroke="#6b4d22" stroke-width="3" stroke-linecap="round" />
+	<path d="M21 56h22" stroke="#3a3226" stroke-width="3" stroke-linecap="round" />
+</svg>
