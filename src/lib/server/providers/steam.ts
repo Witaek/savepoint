@@ -249,10 +249,10 @@ export async function getPlayerAchievements(
 			? mapPlayerAchievements(data.playerstats.achievements)
 			: null;
 	} catch (error) {
-		if (!(error instanceof ProviderError)) throw error;
-		// 403 "Profile is not public"; 400 "Requested app has no stats".
-		if (error.status === 403) throw new SteamPrivateError();
-		if (error.status === 400) return null;
+		// 400 "Requested app has no stats". Steam also refuses some games with 403 (even "Profile
+		// is not public") on a public profile, so a 403 here is about this game only: whether the
+		// game details are private is decided by the owned-games list (getOwnedGames).
+		if (error instanceof ProviderError && error.status === 400) return null;
 		throw error;
 	}
 }

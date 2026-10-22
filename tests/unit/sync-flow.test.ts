@@ -20,11 +20,14 @@ const steam = {
 		hasStats: boolean;
 	}[],
 	schema: new Map<number, string[]>(),
-	unlocked: new Map<number, Set<string>>()
+	unlocked: new Map<number, Set<string>>(),
+	/** Games Steam answers 403 for, as it does for some games on public profiles. */
+	refused: new Set<number>()
 };
 
 vi.mock('../../src/lib/server/providers/steam', async (importOriginal) => {
 	const real = await importOriginal<typeof import('../../src/lib/server/providers/steam')>();
+	const { ProviderError } = await import('../../src/lib/server/providers/http');
 	return {
 		...real,
 		getProfile: async (steamId: string) => ({
@@ -52,6 +55,13 @@ vi.mock('../../src/lib/server/providers/steam', async (importOriginal) => {
 		getGlobalPercentages: async (appId: number) =>
 			new Map((steam.schema.get(appId) ?? []).map((a, i) => [a, 50 - i] as const)),
 		getPlayerAchievements: async (_: string, appId: number) => {
+			if (steam.refused.has(appId)) {
+				throw new ProviderError(
+					'steam responded 403: {"playerstats":{"error":"Profile is not public","success":false}}',
+					'steam',
+					403
+				);
+			}
 			const list = steam.schema.get(appId);
 			if (!list?.length) return null;
 			const got = steam.unlocked.get(appId) ?? new Set();
@@ -218,13 +228,36 @@ describe('ticking and checklists', () => {
 	});
 });
 
+describe('a game Steam refuses', () => {
+	it('is skipped without stopping the sync, and tried again next time', async () => {
+		steam.owned.push(
+			{ appId: 50, name: 'Refused', playtimeMinutes: 10, lastPlayedAt: null, hasStats: true },
+			{ appId: 60, name: 'Fine', playtimeMinutes: 10, lastPlayedAt: null, hasStats: true }
+		);
+		steam.schema.set(50, ['R']);
+		steam.schema.set(60, ['F1', 'F2']);
+		steam.unlocked.set(60, new Set(['F1']));
+		steam.refused.add(50);
+
+		const message = await sync.fullSync(userId);
+		expect(message).toContain("1 game Steam didn't answer for");
+		expect(library.progressFor(userId, gameId(60))).toEqual({ unlocked: 1, total: 2 });
+		const user = getDb().select().from(schema.users).where(eq(schema.users.id, userId)).get()!;
+		expect(user.steamSync.status).toBe('idle');
+
+		steam.refused.clear();
+		await sync.fullSync(userId);
+		expect(entry(50).achievementsSyncedAt).toBeInstanceOf(Date);
+	});
+});
+
 describe('unlinking', () => {
 	it('keeps the library and allows ticking by hand', () => {
 		sync.unlinkSteam(userId);
 		const user = getDb().select().from(schema.users).where(eq(schema.users.id, userId)).get()!;
 		expect(user.steamId).toBeNull();
 		expect(entry(10).steamOwned).toBe(false);
-		expect(library.listLibrary(userId).length).toBe(4);
+		expect(library.listLibrary(userId).length).toBe(6);
 	});
 });
 

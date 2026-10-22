@@ -1,5 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { ProviderError } from '../../src/lib/server/providers/http';
 import {
+	SteamPrivateError,
+	getOwnedGames,
+	getPlayerAchievements,
 	mapOwnedGame,
 	mapPlayerAchievements,
 	mapSchema,
@@ -111,5 +115,29 @@ describe('Steam mapping', () => {
 		expect(parseStoreDate('2024')).toBe('2024');
 		expect(parseStoreDate('Coming soon')).toBeNull();
 		expect(parseStoreDate(undefined)).toBeNull();
+	});
+});
+
+describe('Steam refusals', () => {
+	process.env.STEAM_API_KEY = 'test';
+	afterEach(() => vi.unstubAllGlobals());
+	const answer = (status: number, body: unknown) =>
+		vi.stubGlobal('fetch', async () => new Response(JSON.stringify(body), { status }));
+
+	it("treats a 403 on one game's achievements as that game's problem", async () => {
+		answer(403, { playerstats: { error: 'Profile is not public', success: false } });
+		const error = await getPlayerAchievements('76561198000000001', 570).catch((e) => e);
+		expect(error).toBeInstanceOf(ProviderError);
+		expect(error).not.toBeInstanceOf(SteamPrivateError);
+	});
+
+	it('reads a game without stats as having no achievements', async () => {
+		answer(400, { playerstats: { error: 'Requested app has no stats', success: false } });
+		expect(await getPlayerAchievements('76561198000000001', 570)).toBeNull();
+	});
+
+	it('calls game details private only when the owned-games list is withheld', async () => {
+		answer(200, { response: {} });
+		await expect(getOwnedGames('76561198000000001')).rejects.toBeInstanceOf(SteamPrivateError);
 	});
 });

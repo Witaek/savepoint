@@ -341,13 +341,12 @@ async function syncGames(
 	steamId: string,
 	gameIds: number[],
 	{ notify, progress }: { notify: boolean; progress?: (done: number, total: number) => void }
-): Promise<{ games: number; unlocks: number }> {
+): Promise<{ games: number; unlocks: number; skipped: number }> {
 	const batches: UnlockBatch[] = [];
 	let done = 0;
 	let unlocks = 0;
-	let privateError: SteamPrivateError | null = null;
+	let skipped = 0;
 	await pool(gameIds, 4, async (gameId) => {
-		if (privateError) return;
 		try {
 			const result = await syncGameAchievements(userId, steamId, gameId);
 			if (result && (result.newUnlocks.length || result.perfect)) {
@@ -363,17 +362,21 @@ async function syncGames(
 				});
 			}
 		} catch (error) {
-			if (error instanceof SteamPrivateError) privateError = error;
-			else console.warn(`[steam] achievements of game ${gameId} not read: ${String(error)}`);
+			// One game Steam refuses doesn't stop the others. It isn't marked as read, so the next
+			// sync tries it again.
+			skipped++;
+			const game = getGame(gameId);
+			console.warn(
+				`[steam] achievements of ${game?.name ?? gameId} (app ${game?.steamAppId}) not read: ${String(error)}`
+			);
 		}
 		done++;
 		if (done % 5 === 0 || done === gameIds.length) progress?.(done, gameIds.length);
 	});
-	if (privateError) throw privateError;
 	if (notify) {
 		for (const batch of batches) await notifyUser(userId, unlockMessage(batch));
 	}
-	return { games: gameIds.length, unlocks };
+	return { games: gameIds.length, unlocks, skipped };
 }
 
 function linkedUser(userId: number) {
@@ -433,7 +436,16 @@ export async function fullSync(userId: number, { all = false } = {}): Promise<st
 			progress: (done, total) =>
 				setState(userId, { status: 'running', message: 'Reading achievements…', done, total })
 		});
-		const message = `${owned.length} games, ${result.unlocks} ${firstSync ? 'achievements imported' : 'new unlocks'}${wishlisted ? `, ${wishlisted} added to the wishlist` : ''}`;
+		const message = [
+			`${owned.length} games`,
+			`${result.unlocks} ${firstSync ? 'achievements imported' : 'new unlocks'}`,
+			wishlisted ? `${wishlisted} added to the wishlist` : null,
+			result.skipped
+				? `${result.skipped} game${result.skipped === 1 ? '' : 's'} Steam didn't answer for (tried again next sync)`
+				: null
+		]
+			.filter(Boolean)
+			.join(', ');
 		setState(userId, { status: 'idle', message }, { syncedAt: new Date() });
 		return message;
 	} catch (error) {

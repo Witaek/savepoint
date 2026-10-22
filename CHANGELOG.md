@@ -5,6 +5,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **"Steam keeps this profile's game details private" on a public profile.** Steam refuses the
+  achievements of some games (403) even on public profiles, and one refusal stopped the whole
+  sync with that message. Such a game is now skipped and tried again on the next sync; the sync
+  message says how many were skipped, and the app log names them. The message about private
+  game details now only appears when Steam withholds the whole library.
+
 ## [0.1.0] - 2026-10-22
 
 First version.
